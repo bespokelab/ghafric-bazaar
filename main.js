@@ -1,4 +1,64 @@
 (function () {
+  var links = document.querySelectorAll(".categories a");
+  var groups = document.querySelectorAll(".cat-group");
+  if (!links.length || !groups.length) return;
+
+  function hashId() {
+    return (location.hash || "").replace(/^#/, "");
+  }
+
+  function isGroup(id) {
+    var group = document.getElementById(id);
+    return !!(group && group.classList.contains("cat-group"));
+  }
+
+  function show(id, scroll) {
+    var selected = isGroup(id);
+    groups.forEach(function (group) {
+      group.hidden = selected ? group.id !== id : false;
+    });
+
+    links.forEach(function (link) {
+      var href = link.getAttribute("href");
+      var current = selected ? href === "#" + id : href === "#favorites";
+      link.classList.toggle("is-current", current);
+      if (current) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    });
+
+    if (!scroll) return;
+    var target = document.getElementById(selected ? "category-list" : "favorites");
+    if (!target) return;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+
+  function openFromHash(scroll) {
+    var id = hashId();
+    if (isGroup(id) || id === "favorites") show(id, scroll);
+  }
+
+  links.forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      event.preventDefault();
+      var id = link.getAttribute("href").replace(/^#/, "");
+      if (hashId() !== id) history.pushState(null, "", "#" + id);
+      show(id, true);
+    });
+  });
+
+  window.addEventListener("hashchange", function () {
+    openFromHash(true);
+  });
+  window.addEventListener("popstate", function () {
+    openFromHash(true);
+  });
+
+  var opening = hashId();
+  if (isGroup(opening)) show(opening, true);
+})();
+
+(function () {
   var toggle = document.querySelector(".nav-toggle");
   var nav = document.getElementById("site-nav");
 
