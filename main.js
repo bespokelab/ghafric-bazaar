@@ -157,7 +157,7 @@
     inc.disabled = qty >= maxQty;
 
     var text =
-      "Hello Ghafric Bazaar UAE! I would like to order " +
+      "Hello Ghafric Bazzar UAE! I would like to order " +
       qty +
       " " +
       word +
@@ -430,7 +430,7 @@
     }).join("\n");
 
     var text =
-      "Hello Ghafric Bazaar UAE! I would like to place this order.\n\n" +
+      "Hello Ghafric Bazzar UAE! I would like to place this order.\n\n" +
       "Items:\n" +
       itemLines +
       "\n\nProducts: " + products + " AED\n" +
