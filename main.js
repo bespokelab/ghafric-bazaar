@@ -54,6 +54,26 @@
     openFromHash(true);
   });
 
+  function closeCategories() {
+    groups.forEach(function (group) {
+      group.hidden = true;
+    });
+    links.forEach(function (link) {
+      link.classList.remove("is-current");
+      link.removeAttribute("aria-current");
+    });
+  }
+
+  var header = document.querySelector(".site-header");
+  if (header) {
+    header.addEventListener("click", function (event) {
+      var link = event.target.closest("a");
+      if (event.target.closest("button")) return;
+      if (link && link.getAttribute("href") !== "#top") return;
+      closeCategories();
+    });
+  }
+
   var opening = hashId();
   if (isGroup(opening)) show(opening, true);
 })();
@@ -83,6 +103,26 @@
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") setOpen(false);
+    });
+  }
+
+  var header = document.querySelector(".site-header");
+  if (header) {
+    header.addEventListener("click", function (event) {
+      var link = event.target.closest("a");
+      if (event.target.closest("button")) return;
+      if (link && link.getAttribute("href") !== "#top") return;
+      if (link) event.preventDefault();
+      if (nav) nav.classList.remove("is-open");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        if (label) label.textContent = "Menu";
+      }
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+      if (location.hash) {
+        history.pushState(null, "", location.pathname + location.search);
+      }
     });
   }
 
