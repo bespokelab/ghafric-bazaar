@@ -203,6 +203,8 @@
   var clearBtn = document.getElementById("cart-clear");
   var form = document.getElementById("checkout-form");
   var sendBtn = document.getElementById("checkout-send");
+  var payLink = document.querySelector(".pay-link");
+  var payUrl = document.getElementById("pay-link-url");
   var statusEl = document.getElementById("checkout-status");
   var live = document.getElementById("cart-live");
 
@@ -324,6 +326,24 @@
       cartLink.setAttribute("aria-label", "Checkout, " + count + " " + pieceWord);
     }
     if (sendBtn) sendBtn.disabled = count === 0;
+    if (payLink) {
+      var ziina = "https://pay.ziina.com/TheGhanaShop?source=app";
+      if (count) ziina += "&amount=" + total;
+      payLink.href = ziina;
+      if (count) {
+        payLink.textContent = "Pay " + total + " AED with Ziina";
+        payLink.classList.remove("is-disabled");
+        payLink.removeAttribute("aria-disabled");
+      } else {
+        payLink.textContent = "Pay with Ziina";
+        payLink.classList.add("is-disabled");
+        payLink.setAttribute("aria-disabled", "true");
+      }
+      if (payUrl) {
+        payUrl.hidden = count === 0;
+        payUrl.textContent = count ? ziina : "";
+      }
+    }
     if (statusEl) {
       if (count === 0) statusEl.textContent = "Add at least one piece to send the order.";
       else if (statusEl.textContent.indexOf("Add at least one") === 0) {
@@ -415,7 +435,9 @@
       itemLines +
       "\n\nProducts: " + products + " AED\n" +
       "Delivery: 25 AED\n" +
-      "Total to pay on delivery: " + total + " AED\n\n" +
+      "Total to pay: " + total + " AED\n" +
+      "Pay on Ziina: https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
+      "Or pay this total when the order arrives.\n\n" +
       "Name: " + name + "\n" +
       "Phone: " + phone + "\n" +
       "Delivery address:\n" + address;
@@ -433,7 +455,7 @@
     var url = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
     window.open(url, "_blank", "noopener,noreferrer");
     if (statusEl) {
-      statusEl.textContent = "WhatsApp should open with this order. Pay " + total + " AED when it arrives. If it did not open, allow pop-ups and send again.";
+      statusEl.textContent = "WhatsApp should open with this order. Pay on Ziina, or pay " + total + " AED when it arrives. If it did not open, allow pop-ups and send again.";
     }
   });
   }

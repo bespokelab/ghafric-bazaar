@@ -230,6 +230,23 @@ h2.eyebrow {
   width: 100%;
 }
 
+.pay-link {
+  margin-top: 0.85rem;
+}
+
+.pay-link.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.pay-link__url {
+  word-break: break-all;
+}
+
+#checkout-send {
+  margin-top: 0.7rem;
+}
+
 .site-header {
   position: sticky;
   top: 0;
