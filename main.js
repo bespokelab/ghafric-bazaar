@@ -40,8 +40,10 @@
 
   links.forEach(function (link) {
     link.addEventListener("click", function (event) {
+      var href = link.getAttribute("href") || "";
+      if (href.charAt(0) !== "#") return;
       event.preventDefault();
-      var id = link.getAttribute("href").replace(/^#/, "");
+      var id = href.replace(/^#/, "");
       if (hashId() !== id) history.pushState(null, "", "#" + id);
       show(id, true);
     });
@@ -68,7 +70,7 @@
   if (header) {
     header.addEventListener("click", function (event) {
       var link = event.target.closest("a");
-      if (event.target.closest("button")) return;
+      if (event.target.closest("button") || event.target.closest(".lang")) return;
       if (link && link.getAttribute("href") !== "#top") return;
       closeCategories();
     });
@@ -76,19 +78,34 @@
 
   var opening = hashId();
   if (isGroup(opening)) show(opening, true);
+  else closeCategories();
 })();
 
 (function () {
+  function tr(en) {
+    return window.GhafricI18n ? window.GhafricI18n.t(en) : en;
+  }
+
+  function fill(en, vars) {
+    return window.GhafricI18n ? window.GhafricI18n.fill(en, vars) : en;
+  }
+
   var toggle = document.querySelector(".nav-toggle");
   var nav = document.getElementById("site-nav");
 
   if (toggle && nav) {
     var label = toggle.querySelector(".nav-toggle__label");
 
+    function setMenuLabel(en) {
+      if (!label) return;
+      label.dataset.en = en;
+      label.textContent = tr(en);
+    }
+
     function setOpen(open) {
       nav.classList.toggle("is-open", open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
-      if (label) label.textContent = open ? "Close" : "Menu";
+      setMenuLabel(open ? "Close" : "Menu");
     }
 
     toggle.addEventListener("click", function () {
@@ -110,19 +127,50 @@
   if (header) {
     header.addEventListener("click", function (event) {
       var link = event.target.closest("a");
-      if (event.target.closest("button")) return;
+      if (event.target.closest("button") || event.target.closest(".lang")) return;
       if (link && link.getAttribute("href") !== "#top") return;
       if (link) event.preventDefault();
       if (nav) nav.classList.remove("is-open");
       if (toggle) {
         toggle.setAttribute("aria-expanded", "false");
-        if (label) label.textContent = "Menu";
+        if (label) {
+          label.dataset.en = "Menu";
+          label.textContent = tr("Menu");
+        }
       }
       var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
       if (location.hash) {
         history.pushState(null, "", location.pathname + location.search);
       }
+    });
+  }
+
+  var toTop = document.querySelector(".to-top");
+  if (toTop) {
+    function syncToTop() {
+      toTop.hidden = window.scrollY < 480;
+    }
+
+    syncToTop();
+    window.addEventListener("scroll", syncToTop, { passive: true });
+    toTop.addEventListener("click", function () {
+      if (nav) nav.classList.remove("is-open");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        var menuLabel = toggle.querySelector(".nav-toggle__label");
+        if (menuLabel) {
+          menuLabel.dataset.en = "Menu";
+          menuLabel.textContent = tr("Menu");
+        }
+      }
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+      if (location.hash) {
+        history.pushState(null, "", location.pathname + location.search);
+      }
+      var logo = document.querySelector(".logo");
+      if (logo) logo.focus();
     });
   }
 
@@ -146,7 +194,8 @@
   function render() {
     var products = qty * piecePrice;
     var grand = products + deliveryFee;
-    var word = qty === 1 ? "piece" : "pieces";
+    var wordEn = qty === 1 ? "piece" : "pieces";
+    var word = tr(wordEn);
 
     qtyEl.textContent = String(qty);
     if (qtyCopy) qtyCopy.textContent = String(qty);
@@ -156,16 +205,10 @@
     dec.disabled = qty <= minQty;
     inc.disabled = qty >= maxQty;
 
-    var text =
-      "Hello Ghafric Bazzar UAE! I would like to order " +
-      qty +
-      " " +
-      word +
-      " (30 AED each = " +
-      products +
-      " AED) plus 25 AED delivery. Estimated total: " +
-      grand +
-      " AED.\n\nItems:\n\nDelivery address:\n";
+    var text = fill(
+      "Hello Ghafric Bazzar UAE! I would like to order {qty} {word} (30 AED each = {products} AED) plus 25 AED delivery. Estimated total: {grand} AED.\n\nItems:\n\nDelivery address:\n",
+      { qty: qty, word: word, products: products, grand: grand }
+    );
 
     orderLink.href = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
   }
@@ -185,9 +228,22 @@
   });
 
   render();
+  document.addEventListener("ghafric:lang", render);
 })();
 
 (function () {
+  function tr(en) {
+    return window.GhafricI18n ? window.GhafricI18n.t(en) : en;
+  }
+
+  function fill(en, vars) {
+    return window.GhafricI18n ? window.GhafricI18n.fill(en, vars) : en;
+  }
+
+  function orderName(en) {
+    return window.GhafricI18n ? window.GhafricI18n.orderName(en) : en;
+  }
+
   var piecePrice = 30;
   var deliveryFee = 25;
   var maxQty = 20;
@@ -257,7 +313,8 @@
       var copy = document.createElement("div");
       var nameEl = document.createElement("p");
       nameEl.className = "cart-line__name";
-      nameEl.textContent = item.name;
+      nameEl.dataset.en = item.name;
+      nameEl.textContent = tr(item.name);
       var meta = document.createElement("p");
       meta.className = "cart-line__meta";
       meta.textContent = item.qty + " × 30 AED = " + item.qty * piecePrice + " AED";
@@ -269,12 +326,14 @@
       var stepper = document.createElement("div");
       stepper.className = "stepper";
       stepper.setAttribute("role", "group");
-      stepper.setAttribute("aria-label", "Quantity for " + item.name);
+      stepper.setAttribute("data-aria-lock", "");
+      stepper.setAttribute("aria-label", fill("Quantity for {name}", { name: tr(item.name) }));
 
       var dec = document.createElement("button");
       dec.type = "button";
       dec.textContent = "−";
-      dec.setAttribute("aria-label", "Remove one " + item.name);
+      dec.setAttribute("data-aria-lock", "");
+      dec.setAttribute("aria-label", fill("Remove one {name}", { name: tr(item.name) }));
       dec.disabled = item.qty <= 1;
       dec.addEventListener("click", function () {
         change(index, -1);
@@ -287,7 +346,8 @@
       var inc = document.createElement("button");
       inc.type = "button";
       inc.textContent = "+";
-      inc.setAttribute("aria-label", "Add one " + item.name);
+      inc.setAttribute("data-aria-lock", "");
+      inc.setAttribute("aria-label", fill("Add one {name}", { name: tr(item.name) }));
       inc.disabled = item.qty >= maxQty;
       inc.addEventListener("click", function () {
         change(index, 1);
@@ -296,12 +356,14 @@
       var remove = document.createElement("button");
       remove.type = "button";
       remove.className = "cart-line__remove";
-      remove.textContent = "Remove";
-      remove.setAttribute("aria-label", "Remove " + item.name);
+      remove.dataset.en = "Remove";
+      remove.textContent = tr("Remove");
+      remove.setAttribute("data-aria-lock", "");
+      remove.setAttribute("aria-label", fill("Remove {name}", { name: tr(item.name) }));
       remove.addEventListener("click", function () {
         cart.splice(index, 1);
         render();
-        if (live) live.textContent = item.name + " removed.";
+        if (live) live.textContent = fill("{name} removed.", { name: tr(item.name) });
       });
 
       stepper.appendChild(dec);
@@ -322,8 +384,8 @@
     if (totalEl) totalEl.textContent = total + " AED";
     if (countEl) countEl.textContent = String(count);
     if (cartLink) {
-      var pieceWord = count === 1 ? "piece" : "pieces";
-      cartLink.setAttribute("aria-label", "Checkout, " + count + " " + pieceWord);
+      var pieceWord = tr(count === 1 ? "piece" : "pieces");
+      cartLink.setAttribute("aria-label", fill("Checkout, {count} {word}", { count: count, word: pieceWord }));
     }
     if (sendBtn) sendBtn.disabled = count === 0;
     if (payLink) {
@@ -331,11 +393,11 @@
       if (count) ziina += "&amount=" + total;
       payLink.href = ziina;
       if (count) {
-        payLink.textContent = "Pay " + total + " AED with Ziina";
+        payLink.textContent = fill("Pay {total} AED with Ziina", { total: total });
         payLink.classList.remove("is-disabled");
         payLink.removeAttribute("aria-disabled");
       } else {
-        payLink.textContent = "Pay with Ziina";
+        payLink.textContent = tr("Pay with Ziina");
         payLink.classList.add("is-disabled");
         payLink.setAttribute("aria-disabled", "true");
       }
@@ -345,9 +407,16 @@
       }
     }
     if (statusEl) {
-      if (count === 0) statusEl.textContent = "Add at least one piece to send the order.";
-      else if (statusEl.textContent.indexOf("Add at least one") === 0) {
-        statusEl.textContent = "Pay the total when the order arrives. Delivery is 25 AED.";
+      var state = statusEl.dataset.state || "empty";
+      if (count === 0) state = "empty";
+      else if (state !== "sent") state = "ready";
+      statusEl.dataset.state = state;
+      if (state === "sent") {
+        statusEl.textContent = fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, allow pop-ups and send again.", { total: total });
+      } else if (state === "ready") {
+        statusEl.textContent = tr("Pay the total when the order arrives. Delivery is 25 AED.");
+      } else {
+        statusEl.textContent = tr("Add at least one piece to send the order.");
       }
     }
     saveCart();
@@ -366,13 +435,13 @@
     button.addEventListener("click", function () {
       var card = button.closest("article");
       var heading = card ? card.querySelector("h3") : null;
-      var name = heading ? heading.textContent.replace(/\s+/g, " ").trim() : "";
+      var name = heading ? (heading.dataset.en || heading.textContent.replace(/\s+/g, " ").trim()) : "";
       if (!name) return;
 
       var existing = findItem(name);
       if (existing) {
         if (existing.qty >= maxQty) {
-          if (live) live.textContent = name + " is already at 20, the most one order can include.";
+          if (live) live.textContent = fill("{name} is already at 20, the most one order can include.", { name: tr(name) });
           return;
         }
         existing.qty += 1;
@@ -382,14 +451,14 @@
 
       render();
       var added = findItem(name);
-      button.textContent = "Added";
+      button.textContent = tr("Added");
       window.setTimeout(function () {
-        button.textContent = "Add to cart";
+        button.textContent = tr("Add to cart");
       }, 900);
       if (live && added) {
         var totalPieces = pieces();
-        var pieceWord = totalPieces === 1 ? "piece" : "pieces";
-        live.textContent = name + " added. " + totalPieces + " " + pieceWord + " in checkout.";
+        var pieceWord = tr(totalPieces === 1 ? "piece" : "pieces");
+        live.textContent = fill("{name} added. {count} {word} in checkout.", { name: tr(name), count: totalPieces, word: pieceWord });
       }
     });
   });
@@ -398,7 +467,7 @@
     clearBtn.addEventListener("click", function () {
       cart = [];
       render();
-      if (live) live.textContent = "Cart cleared.";
+      if (live) live.textContent = tr("Cart cleared.");
     });
   }
 
@@ -426,23 +495,23 @@
     var products = count * piecePrice;
     var total = products + deliveryFee;
     var itemLines = cart.map(function (item) {
-      return "- " + item.name + " x " + item.qty + " = " + item.qty * piecePrice + " AED";
+      return "- " + orderName(item.name) + " x " + item.qty + " = " + item.qty * piecePrice + " AED";
     }).join("\n");
 
     var text =
-      "Hello Ghafric Bazzar UAE! I would like to place this order.\n\n" +
-      "Items:\n" +
+      tr("Hello Ghafric Bazzar UAE! I would like to place this order.") + "\n\n" +
+      tr("Items:") + "\n" +
       itemLines +
-      "\n\nProducts: " + products + " AED\n" +
-      "Delivery: 25 AED\n" +
-      "Total to pay: " + total + " AED\n" +
-      "Pay on Ziina: https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
-      "Or pay this total when the order arrives.\n\n" +
-      "Name: " + name + "\n" +
-      "Phone: " + phone + "\n" +
-      "Delivery address:\n" + address;
+      "\n\n" + tr("Products:") + " " + products + " AED\n" +
+      tr("Delivery:") + " 25 AED\n" +
+      tr("Total to pay:") + " " + total + " AED\n" +
+      tr("Pay on Ziina:") + " https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
+      tr("Or pay this total when the order arrives.") + "\n\n" +
+      tr("Name:") + " " + name + "\n" +
+      tr("Phone:") + " " + phone + "\n" +
+      tr("Delivery address:") + "\n" + address;
 
-    if (note) text += "\n\nNote:\n" + note;
+    if (note) text += "\n\n" + tr("Note:") + "\n" + note;
 
     try {
       localStorage.setItem(detailsKey, JSON.stringify({
@@ -455,10 +524,12 @@
     var url = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
     window.open(url, "_blank", "noopener,noreferrer");
     if (statusEl) {
-      statusEl.textContent = "WhatsApp should open with this order. Pay on Ziina, or pay " + total + " AED when it arrives. If it did not open, allow pop-ups and send again.";
+      statusEl.dataset.state = "sent";
+      statusEl.textContent = fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, allow pop-ups and send again.", { total: total });
     }
   });
   }
 
   render();
+  document.addEventListener("ghafric:lang", render);
 })();
