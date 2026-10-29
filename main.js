@@ -259,8 +259,6 @@
   var clearBtn = document.getElementById("cart-clear");
   var form = document.getElementById("checkout-form");
   var sendBtn = document.getElementById("checkout-send");
-  var payLink = document.querySelector(".pay-link");
-  var payUrl = document.getElementById("pay-link-url");
   var statusEl = document.getElementById("checkout-status");
   var live = document.getElementById("cart-live");
 
@@ -388,24 +386,6 @@
       cartLink.setAttribute("aria-label", fill("Checkout, {count} {word}", { count: count, word: pieceWord }));
     }
     if (sendBtn) sendBtn.disabled = count === 0;
-    if (payLink) {
-      var ziina = "https://pay.ziina.com/TheGhanaShop?source=app";
-      if (count) ziina += "&amount=" + total;
-      payLink.href = ziina;
-      if (count) {
-        payLink.textContent = fill("Pay {total} AED with Ziina", { total: total });
-        payLink.classList.remove("is-disabled");
-        payLink.removeAttribute("aria-disabled");
-      } else {
-        payLink.textContent = tr("Pay with Ziina");
-        payLink.classList.add("is-disabled");
-        payLink.setAttribute("aria-disabled", "true");
-      }
-      if (payUrl) {
-        payUrl.hidden = count === 0;
-        payUrl.textContent = count ? ziina : "";
-      }
-    }
     if (statusEl) {
       var state = statusEl.dataset.state || "empty";
       if (count === 0) state = "empty";
