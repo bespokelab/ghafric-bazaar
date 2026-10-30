@@ -86,12 +86,13 @@
     return window.GhafricI18n ? window.GhafricI18n.t(en) : en;
   }
 
-  function fill(en, vars) {
-    return window.GhafricI18n ? window.GhafricI18n.fill(en, vars) : en;
-  }
-
   var toggle = document.querySelector(".nav-toggle");
   var nav = document.getElementById("site-nav");
+  var backdrop = document.querySelector(".nav-backdrop");
+
+  function hideBackdrop() {
+    if (backdrop) backdrop.classList.remove("is-on");
+  }
 
   if (toggle && nav) {
     var label = toggle.querySelector(".nav-toggle__label");
@@ -106,6 +107,7 @@
       nav.classList.toggle("is-open", open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       setMenuLabel(open ? "Close" : "Menu");
+      if (backdrop) backdrop.classList.toggle("is-on", open);
     }
 
     toggle.addEventListener("click", function () {
@@ -121,6 +123,18 @@
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") setOpen(false);
     });
+
+    if (backdrop) {
+      backdrop.addEventListener("click", function () {
+        setOpen(false);
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      if (!nav.classList.contains("is-open")) return;
+      if (toggle.contains(event.target) || nav.contains(event.target)) return;
+      setOpen(false);
+    });
   }
 
   var header = document.querySelector(".site-header");
@@ -131,6 +145,7 @@
       if (link && link.getAttribute("href") !== "#top") return;
       if (link) event.preventDefault();
       if (nav) nav.classList.remove("is-open");
+      hideBackdrop();
       if (toggle) {
         toggle.setAttribute("aria-expanded", "false");
         if (label) {
@@ -156,6 +171,7 @@
     window.addEventListener("scroll", syncToTop, { passive: true });
     toTop.addEventListener("click", function () {
       if (nav) nav.classList.remove("is-open");
+      hideBackdrop();
       if (toggle) {
         toggle.setAttribute("aria-expanded", "false");
         var menuLabel = toggle.querySelector(".nav-toggle__label");
@@ -188,7 +204,7 @@
   var piecePrice = 30;
   var deliveryFee = 25;
   var minQty = 1;
-  var maxQty = 20;
+  var maxQty = 60;
   var qty = 2;
 
   function render() {
@@ -204,13 +220,6 @@
     grandEl.textContent = grand + " AED";
     dec.disabled = qty <= minQty;
     inc.disabled = qty >= maxQty;
-
-    var text = fill(
-      "Hello Ghafric Bazzar UAE! I would like to order {qty} {word} (30 AED each = {products} AED) plus 25 AED delivery. Estimated total: {grand} AED.\n\nItems:\n\nDelivery address:\n",
-      { qty: qty, word: word, products: products, grand: grand }
-    );
-
-    orderLink.href = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
   }
 
   dec.addEventListener("click", function () {
@@ -240,8 +249,35 @@
     return window.GhafricI18n ? window.GhafricI18n.fill(en, vars) : en;
   }
 
+  function uaePhone(value) {
+    var arabic = { "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4", "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9", "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4", "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9" };
+    var s = String(value || "").replace(/[٠-٩۰-۹]/g, function (ch) { return arabic[ch] || ch; });
+    s = s.replace(/[\s().-]/g, "");
+    if (s.charAt(0) === "+") s = s.slice(1);
+    else if (s.indexOf("00") === 0) s = s.slice(2);
+    if (!/^\d+$/.test(s)) return false;
+    if (s.indexOf("971") === 0) s = s.slice(3);
+    if (s.charAt(0) === "0") s = s.slice(1);
+    return /^5\d{8}$/.test(s) || /^[234679]\d{7}$/.test(s);
+  }
+
+  var phoneHint = "Enter a UAE phone number, such as 0501234567.";
+
   function orderName(en) {
     return window.GhafricI18n ? window.GhafricI18n.orderName(en) : en;
+  }
+
+  function showStatus(text) {
+    if (!statusEl) return;
+    if (document.documentElement.dir === "rtl" && /\d[\d,]*\s*AED/.test(text)) {
+      statusEl.innerHTML = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/(\d[\d,]*\s*AED)/g, '<bdi dir="ltr">$1</bdi>');
+    } else {
+      statusEl.textContent = text;
+    }
+  }
+
+  function moneyText(amount) {
+    return "\u200E" + amount + " AED";
   }
 
   var piecePrice = 30;
@@ -289,6 +325,39 @@
     try {
       localStorage.setItem(cartKey, JSON.stringify(cart));
     } catch (error) {}
+  }
+
+  function readStore(key) {
+    try { return sessionStorage.getItem(key) || ""; } catch (error) { return ""; }
+  }
+
+  function writeStore(key, value) {
+    try {
+      if (value) sessionStorage.setItem(key, value);
+      else sessionStorage.removeItem(key);
+    } catch (error) {}
+  }
+
+  function cartSig() {
+    return cart.map(function (item) {
+      return item.name + "\t" + item.qty;
+    }).join("\n");
+  }
+
+  function orderCode() {
+    var sig = cartSig();
+    var saved = null;
+    try { saved = JSON.parse(readStore("ghafric-order-code") || "null"); } catch (error) {}
+    if (saved && saved.sig === sig && typeof saved.code === "string" && /^GB-[A-Z2-9]{4}$/.test(saved.code)) return saved.code;
+    var alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    var code = "GB-";
+    var bytes = new Uint8Array(4);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+    else for (var i = 0; i < 4; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+    for (var n = 0; n < 4; n += 1) code += alphabet.charAt(bytes[n] % alphabet.length);
+    writeStore("ghafric-order-code", JSON.stringify({ sig: sig, code: code }));
+    writeStore("ghafric-order-sent", "");
+    return code;
   }
 
   function findItem(name) {
@@ -386,18 +455,33 @@
       cartLink.setAttribute("aria-label", fill("Checkout, {count} {word}", { count: count, word: pieceWord }));
     }
     if (sendBtn) sendBtn.disabled = count === 0;
+    var code = "";
+    if (count) code = orderCode();
+    else {
+      writeStore("ghafric-order-code", "");
+      writeStore("ghafric-order-sent", "");
+    }
+    var codeEl = document.getElementById("order-code");
+    var codeValue = document.getElementById("order-code-value");
+    if (codeEl) codeEl.hidden = !code;
+    if (codeValue) codeValue.textContent = code;
     if (statusEl) {
-      var state = statusEl.dataset.state || "empty";
+      var sentCode = readStore("ghafric-order-sent");
+      var state = "empty";
       if (count === 0) state = "empty";
-      else if (state !== "sent") state = "ready";
+      else if (sentCode && sentCode === code) state = "sent";
+      else state = "ready";
       statusEl.dataset.state = state;
       if (state === "sent") {
-        statusEl.textContent = fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, allow pop-ups and send again.", { total: total });
+        showStatus(tr("This order code was already opened in WhatsApp. Send again only if that message did not go through."));
       } else if (state === "ready") {
-        statusEl.textContent = tr("Pay the total when the order arrives. Delivery is 25 AED.");
+        showStatus(tr("Pay the total when the order arrives. Delivery is 25 AED."));
       } else {
-        statusEl.textContent = tr("Add at least one piece to send the order.");
+        showStatus(tr("Add at least one piece to send the order."));
       }
+    }
+    if (form && form.elements.phone && form.elements.phone.validity.customError) {
+      form.elements.phone.setCustomValidity(tr(phoneHint));
     }
     saveCart();
   }
@@ -451,10 +535,16 @@
     });
   }
 
+  if (form && form.elements.phone) {
+    form.elements.phone.addEventListener("input", function () {
+      form.elements.phone.setCustomValidity("");
+    });
+  }
+
   if (form) {
   try {
     var details = JSON.parse(localStorage.getItem(detailsKey) || "{}");
-    ["name", "phone", "address"].forEach(function (field) {
+    ["name", "phone", "address", "emirate", "area"].forEach(function (field) {
       if (details && typeof details[field] === "string" && form.elements[field]) {
         form.elements[field].value = details[field];
       }
@@ -468,28 +558,41 @@
 
     var name = String(form.elements.name.value || "").trim();
     var phone = String(form.elements.phone.value || "").trim();
+    var emirate = String(form.elements.emirate.value || "").trim();
+    var area = String(form.elements.area.value || "").trim();
     var address = String(form.elements.address.value || "").trim();
     var note = String(form.elements.note.value || "").trim();
-    if (!name || !phone || !address) return;
+    if (!name || !phone || !emirate || !area || !address) return;
+    var phoneInput = form.elements.phone;
+    if (phoneInput && !uaePhone(phone)) {
+      phoneInput.setCustomValidity(tr(phoneHint));
+      phoneInput.reportValidity();
+      return;
+    }
+    if (phoneInput) phoneInput.setCustomValidity("");
 
     var products = count * piecePrice;
     var total = products + deliveryFee;
     var itemLines = cart.map(function (item) {
-      return "- " + orderName(item.name) + " x " + item.qty + " = " + item.qty * piecePrice + " AED";
+      return "- " + orderName(item.name) + " x " + item.qty + " = " + moneyText(item.qty * piecePrice);
     }).join("\n");
 
+    var code = orderCode();
     var text =
       tr("Hello Ghafric Bazzar UAE! I would like to place this order.") + "\n\n" +
+      tr("Order code:") + " " + code + "\n\n" +
       tr("Items:") + "\n" +
       itemLines +
-      "\n\n" + tr("Products:") + " " + products + " AED\n" +
-      tr("Delivery:") + " 25 AED\n" +
-      tr("Total to pay:") + " " + total + " AED\n" +
+      "\n\n" + tr("Products:") + " " + moneyText(products) + "\n" +
+      tr("Delivery:") + " " + moneyText(deliveryFee) + "\n" +
+      tr("Total to pay:") + " " + moneyText(total) + "\n" +
       tr("Pay on Ziina:") + " https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
       tr("Or pay this total when the order arrives.") + "\n\n" +
       tr("Name:") + " " + name + "\n" +
       tr("Phone:") + " " + phone + "\n" +
-      tr("Delivery address:") + "\n" + address;
+      tr("Emirate:") + " " + emirate + "\n" +
+      tr("Area:") + " " + area + "\n" +
+      tr("Building:") + " " + address;
 
     if (note) text += "\n\n" + tr("Note:") + "\n" + note;
 
@@ -497,17 +600,44 @@
       localStorage.setItem(detailsKey, JSON.stringify({
         name: name,
         phone: phone,
+        emirate: emirate,
+        area: area,
         address: address
       }));
     } catch (error) {}
 
     var url = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
-    window.open(url, "_blank", "noopener,noreferrer");
+    var messageEl = document.getElementById("order-message");
+    if (messageEl) {
+      messageEl.hidden = false;
+      messageEl.value = text;
+    }
+    writeStore("ghafric-order-sent", code);
     if (statusEl) {
       statusEl.dataset.state = "sent";
-      statusEl.textContent = fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, allow pop-ups and send again.", { total: total });
+      showStatus(fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, send again.", { total: total }));
     }
+    window.location.href = url;
   });
+  }
+
+  var search = document.getElementById("piece-search");
+  var searchEmpty = document.getElementById("search-empty");
+  if (search) {
+    search.addEventListener("input", function () {
+      var q = search.value.replace(/\s+/g, " ").trim().toLowerCase();
+      var shown = 0;
+      document.querySelectorAll(".cat-group.is-on article").forEach(function (card) {
+        var heading = card.querySelector("h3");
+        var label = card.querySelector(".card__label");
+        var name = heading ? ((heading.dataset.en || "") + " " + heading.textContent) : "";
+        var desc = label ? ((label.dataset.en || "") + " " + label.textContent) : "";
+        var match = !q || (name + " " + desc).toLowerCase().indexOf(q) !== -1;
+        card.hidden = !match;
+        if (match) shown += 1;
+      });
+      if (searchEmpty) searchEmpty.hidden = shown !== 0;
+    });
   }
 
   render();

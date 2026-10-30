@@ -32,26 +32,41 @@
     if (el.closest("[data-i18n-html], .lang, .i18n-skip")) return true;
     if (el.classList.contains("stepper__value") || el.classList.contains("cart-line__meta") || el.classList.contains("pay-link") || el.classList.contains("cart-link__count")) return true;
     var id = el.id;
-    return id === "qty" || id === "qty-copy" || id === "qty-word" || id === "product-total" || id === "grand-total" || id === "cart-products" || id === "cart-delivery" || id === "cart-total" || id === "cart-count" || id === "checkout-status" || id === "pay-link-url" || id === "cart-live";
+    return id === "qty" || id === "qty-copy" || id === "qty-word" || id === "product-total" || id === "grand-total" || id === "cart-products" || id === "cart-delivery" || id === "cart-total" || id === "cart-count" || id === "checkout-status" || id === "pay-link-url" || id === "cart-live" || id === "order-code-value";
+  }
+
+  function moneyHtml(text) {
+    return text.replace(/(\d[\d,]*\s*AED)/g, '<bdi dir="ltr">$1</bdi>');
   }
 
   function apply() {
     document.documentElement.lang = lang;
     document.documentElement.dir = LANGS[lang] || "ltr";
+    var rtl = document.documentElement.dir === "rtl";
 
     document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
       if (!el.dataset.htmlEn) el.dataset.htmlEn = el.innerHTML;
       var key = "html:" + el.getAttribute("data-i18n-html");
-      el.innerHTML = lang === "en" ? el.dataset.htmlEn : ((dict[lang] && dict[lang][key]) || el.dataset.htmlEn);
+      var html = lang === "en" ? el.dataset.htmlEn : ((dict[lang] && dict[lang][key]) || el.dataset.htmlEn);
+      el.innerHTML = rtl ? moneyHtml(html) : html;
     });
 
-    document.querySelectorAll("h1, h2, h3, p, a, button, li, span, label, strong, em").forEach(function (el) {
+    document.querySelectorAll("h1, h2, h3, p, a, button, li, span, label, strong, em, option").forEach(function (el) {
+      if (el.dataset.money) {
+        el.textContent = el.dataset.en || "";
+        delete el.dataset.money;
+      }
       if (skip(el) || el.childElementCount > 0) return;
       var current = el.textContent.replace(/\s+/g, " ").trim();
-      if (!current) return;
+      if (!current && !el.dataset.en) return;
       if (!el.dataset.en) el.dataset.en = current;
       var next = t(el.dataset.en);
-      if (el.textContent !== next) el.textContent = next;
+      if (rtl && /\d[\d,]*\s*AED/.test(next)) {
+        el.innerHTML = moneyHtml(next.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+        el.dataset.money = "1";
+      } else if (el.textContent !== next) {
+        el.textContent = next;
+      }
     });
 
     document.querySelectorAll("img[alt]").forEach(function (img) {
@@ -66,7 +81,7 @@
       el.setAttribute("aria-label", t(el.dataset.ariaEn));
     });
 
-    var orderEn = "Hello Ghafric Bazzar UAE! I would like to place an order.\n\nItems:\n\nDelivery address:\n";
+    var orderEn = "Hello Ghafric Bazzar UAE!";
     document.querySelectorAll("[data-wa]").forEach(function (link) {
       var key = link.getAttribute("data-wa");
       var message = lang === "en" && key === "wa.order" ? orderEn : t(key);
@@ -86,6 +101,12 @@
     document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(function (meta) {
       if (!meta.dataset.en) meta.dataset.en = meta.getAttribute("content") || "";
       meta.setAttribute("content", t(meta.dataset.en));
+    });
+
+    document.querySelectorAll("[placeholder]").forEach(function (el) {
+      if (el.closest(".lang") || el.closest(".i18n-skip")) return;
+      if (!el.dataset.placeholderEn) el.dataset.placeholderEn = el.getAttribute("placeholder") || "";
+      if (el.dataset.placeholderEn) el.placeholder = t(el.dataset.placeholderEn);
     });
 
     var select = document.getElementById("lang-select");
