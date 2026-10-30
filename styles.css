@@ -1101,14 +1101,6 @@ html.js .cat-group:not(.is-on) {
   font-size: 0.92rem;
 }
 
-.chat__bubble p {
-  margin: 0 0 0.55rem;
-}
-
-.chat__bubble p:last-child {
-  margin-bottom: 0;
-}
-
 .about-card {
   max-width: 50rem;
   background: var(--paper);
@@ -1148,31 +1140,6 @@ html.js .cat-group:not(.is-on) {
 .about__price strong {
   color: var(--terracotta-deep);
   font-weight: 700;
-}
-
-.closer {
-  background: var(--pink);
-  color: var(--ink);
-}
-
-.closer__inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.2rem;
-  padding: 2.4rem 0;
-}
-
-.closer h2 {
-  color: var(--ink);
-  margin-bottom: 0.45rem;
-}
-
-.closer p {
-  margin: 0;
-  max-width: 38rem;
-  color: var(--ink);
 }
 
 .footer {
@@ -1422,7 +1389,6 @@ html.js .cat-group:not(.is-on) {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .order-grid,
   .checkout {
     grid-template-columns: 1fr 1fr;
     align-items: start;
