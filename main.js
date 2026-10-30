@@ -203,6 +203,8 @@
 
   var piecePrice = 30;
   var deliveryFee = 25;
+  var codFee = 10;
+  var doorEl = document.getElementById("door-total");
   var minQty = 1;
   var maxQty = 60;
   var qty = 2;
@@ -210,6 +212,7 @@
   function render() {
     var products = qty * piecePrice;
     var grand = products + deliveryFee;
+    var door = grand + codFee;
     var wordEn = qty === 1 ? "piece" : "pieces";
     var word = tr(wordEn);
 
@@ -218,6 +221,7 @@
     if (wordEl) wordEl.textContent = word;
     productEl.textContent = products + " AED";
     grandEl.textContent = grand + " AED";
+    if (doorEl) doorEl.textContent = door + " AED";
     dec.disabled = qty <= minQty;
     inc.disabled = qty >= maxQty;
   }
@@ -282,6 +286,7 @@
 
   var piecePrice = 30;
   var deliveryFee = 25;
+  var codFee = 10;
   var maxQty = 20;
   var cartKey = "ghafric-bazaar-cart";
   var detailsKey = "ghafric-bazaar-details";
@@ -290,6 +295,7 @@
   var productsEl = document.getElementById("cart-products");
   var deliveryEl = document.getElementById("cart-delivery");
   var totalEl = document.getElementById("cart-total");
+  var doorTotalEl = document.getElementById("cart-door");
   var countEl = document.getElementById("cart-count");
   var cartLink = document.querySelector(".cart-link");
   var clearBtn = document.getElementById("cart-clear");
@@ -371,6 +377,7 @@
     var count = pieces();
     var products = count * piecePrice;
     var total = count ? products + deliveryFee : 0;
+    var door = count ? total + codFee : 0;
 
     if (linesEl) linesEl.innerHTML = "";
     if (linesEl) cart.forEach(function (item, index) {
@@ -449,6 +456,7 @@
     if (productsEl) productsEl.textContent = products + " AED";
     if (deliveryEl) deliveryEl.textContent = count ? deliveryFee + " AED" : "—";
     if (totalEl) totalEl.textContent = total + " AED";
+    if (doorTotalEl) doorTotalEl.textContent = count ? door + " AED" : "—";
     if (countEl) countEl.textContent = String(count);
     if (cartLink) {
       var pieceWord = tr(count === 1 ? "piece" : "pieces");
@@ -475,7 +483,7 @@
       if (state === "sent") {
         showStatus(tr("This order code was already opened in WhatsApp. Send again only if that message did not go through."));
       } else if (state === "ready") {
-        showStatus(tr("Pay the total when the order arrives. Delivery is 25 AED."));
+        showStatus(tr("Pay on Ziina, or pay cash at the door. Cash on delivery adds 10 AED. Delivery takes 1 to 3 business days."));
       } else {
         showStatus(tr("Add at least one piece to send the order."));
       }
@@ -573,6 +581,7 @@
 
     var products = count * piecePrice;
     var total = products + deliveryFee;
+    var door = total + codFee;
     var itemLines = cart.map(function (item) {
       return "- " + orderName(item.name) + " x " + item.qty + " = " + moneyText(item.qty * piecePrice);
     }).join("\n");
@@ -585,9 +594,11 @@
       itemLines +
       "\n\n" + tr("Products:") + " " + moneyText(products) + "\n" +
       tr("Delivery:") + " " + moneyText(deliveryFee) + "\n" +
-      tr("Total to pay:") + " " + moneyText(total) + "\n" +
-      tr("Pay on Ziina:") + " https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
-      tr("Or pay this total when the order arrives.") + "\n\n" +
+      tr("Pay on Ziina:") + " " + moneyText(total) + "\n" +
+      "https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
+      tr("Pay at the door:") + " " + moneyText(door) + "\n" +
+      tr("Cash on delivery adds 10 AED.") + "\n" +
+      tr("Delivery takes 1 to 3 business days.") + "\n\n" +
       tr("Name:") + " " + name + "\n" +
       tr("Phone:") + " " + phone + "\n" +
       tr("Emirate:") + " " + emirate + "\n" +
@@ -615,7 +626,7 @@
     writeStore("ghafric-order-sent", code);
     if (statusEl) {
       statusEl.dataset.state = "sent";
-      showStatus(fill("WhatsApp should open with this order. Pay on Ziina, or pay {total} AED when it arrives. If it did not open, send again.", { total: total }));
+      showStatus(fill("WhatsApp should open with this order. Pay {ziina} AED on Ziina, or {door} AED cash at the door. If it did not open, send again.", { ziina: total, door: door }));
     }
     window.location.href = url;
   });

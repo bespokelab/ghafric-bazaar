@@ -32,7 +32,7 @@
     if (el.closest("[data-i18n-html], .lang, .i18n-skip")) return true;
     if (el.classList.contains("stepper__value") || el.classList.contains("cart-line__meta") || el.classList.contains("pay-link") || el.classList.contains("cart-link__count")) return true;
     var id = el.id;
-    return id === "qty" || id === "qty-copy" || id === "qty-word" || id === "product-total" || id === "grand-total" || id === "cart-products" || id === "cart-delivery" || id === "cart-total" || id === "cart-count" || id === "checkout-status" || id === "pay-link-url" || id === "cart-live" || id === "order-code-value";
+    return id === "qty" || id === "qty-copy" || id === "qty-word" || id === "product-total" || id === "grand-total" || id === "door-total" || id === "cart-products" || id === "cart-delivery" || id === "cart-total" || id === "cart-door" || id === "cart-count" || id === "checkout-status" || id === "pay-link-url" || id === "cart-live" || id === "order-code-value";
   }
 
   function moneyHtml(text) {
