@@ -36,7 +36,9 @@
   }
 
   function moneyHtml(text) {
-    return text.replace(/(\d[\d,]*\s*AED)/g, '<bdi dir="ltr">$1</bdi>');
+    return text.replace(/(\+\s*)?\d[\d,]*\s*AED/g, function (match) {
+      return '<bdi dir="ltr">' + match + '</bdi>';
+    });
   }
 
   function apply() {
