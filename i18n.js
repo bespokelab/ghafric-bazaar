@@ -93,15 +93,29 @@
       if (!title.dataset.en) title.dataset.en = title.textContent.trim();
       title.textContent = t(title.dataset.en);
     }
-    var categoryTitle = document.getElementById("category-title");
-    if (categoryTitle && categoryTitle.dataset.en) {
-      document.title = t(categoryTitle.dataset.en) + " | Ghafric Bazzar UAE";
-    }
+    var ogLocales = { en: "en_AE", ar: "ar_AE", am: "am_ET", hi: "hi_IN", ur: "ur_PK", tl: "fil_PH" };
+    var ogLocale = document.querySelector('meta[property="og:locale"]');
+    if (ogLocale) ogLocale.setAttribute("content", ogLocales[lang] || "en_AE");
 
     document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach(function (meta) {
       if (!meta.dataset.en) meta.dataset.en = meta.getAttribute("content") || "";
       meta.setAttribute("content", t(meta.dataset.en));
     });
+
+    var categoryTitle = document.getElementById("category-title");
+    if (categoryTitle && categoryTitle.dataset.en) {
+      var categoryName = t(categoryTitle.dataset.en);
+      var categoryHeading = categoryName + " | Ghafric Bazzar UAE";
+      document.title = categoryHeading;
+      var ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", categoryHeading);
+      if (categoryTitle.dataset.en !== "Full Collection") {
+        var categoryDesc = fill("{name}. Every piece is 30 AED. Delivery is 25 AED and takes 1 to 3 business days. Cash on delivery adds 10 AED.", { name: categoryName });
+        document.querySelectorAll('meta[name="description"], meta[property="og:description"]').forEach(function (meta) {
+          meta.setAttribute("content", categoryDesc);
+        });
+      }
+    }
 
     document.querySelectorAll("[placeholder]").forEach(function (el) {
       if (el.closest(".lang") || el.closest(".i18n-skip")) return;
