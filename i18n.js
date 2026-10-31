@@ -83,11 +83,11 @@
       el.setAttribute("aria-label", t(el.dataset.ariaEn));
     });
 
-    var orderEn = "Hello Ghafric Bazzar UAE!";
+    var orderEn = "Hello Ghafric Bazaar UAE!";
     document.querySelectorAll("[data-wa]").forEach(function (link) {
       var key = link.getAttribute("data-wa");
       var message = lang === "en" && key === "wa.order" ? orderEn : t(key);
-      link.href = "https://wa.me/971521083274?text=" + encodeURIComponent(message);
+      link.href = "https://wa.me/971588028752?text=" + encodeURIComponent(message);
     });
 
     var title = document.querySelector("title");
@@ -107,7 +107,7 @@
     var categoryTitle = document.getElementById("category-title");
     if (categoryTitle && categoryTitle.dataset.en) {
       var categoryName = t(categoryTitle.dataset.en);
-      var categoryHeading = categoryName + " | Ghafric Bazzar UAE";
+      var categoryHeading = categoryName + " | Ghafric Bazaar UAE";
       document.title = categoryHeading;
       var ogTitle = document.querySelector('meta[property="og:title"]');
       if (ogTitle) ogTitle.setAttribute("content", categoryHeading);

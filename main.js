@@ -588,7 +588,7 @@
 
     var code = orderCode();
     var text =
-      tr("Hello Ghafric Bazzar UAE! I would like to place this order.") + "\n\n" +
+      tr("Hello Ghafric Bazaar UAE! I would like to place this order.") + "\n\n" +
       tr("Order code:") + " " + code + "\n\n" +
       tr("Items:") + "\n" +
       itemLines +
@@ -617,7 +617,7 @@
       }));
     } catch (error) {}
 
-    var url = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
+    var url = "https://wa.me/971588028752?text=" + encodeURIComponent(text);
     var messageEl = document.getElementById("order-message");
     if (messageEl) {
       messageEl.hidden = false;
