@@ -617,7 +617,7 @@
       }));
     } catch (error) {}
 
-    var url = "https://wa.me/971588028752?text=" + encodeURIComponent(text);
+    var url = "https://wa.me/971521083274?text=" + encodeURIComponent(text);
     var messageEl = document.getElementById("order-message");
     if (messageEl) {
       messageEl.hidden = false;

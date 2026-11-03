@@ -87,7 +87,7 @@
     document.querySelectorAll("[data-wa]").forEach(function (link) {
       var key = link.getAttribute("data-wa");
       var message = lang === "en" && key === "wa.order" ? orderEn : t(key);
-      link.href = "https://wa.me/971588028752?text=" + encodeURIComponent(message);
+      link.href = "https://wa.me/971521083274?text=" + encodeURIComponent(message);
     });
 
     var title = document.querySelector("title");
