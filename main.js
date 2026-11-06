@@ -2,7 +2,7 @@ window.GhafricOffer = (function () {
   var start = "2026-11-07";
   var end = "2026-11-14";
   var spend = 150;
-  var line = "Spend 150 AED and delivery is free. Ends 14 November.";
+  var line = "From 7 to 14 November, spend 150 AED and delivery is free.";
   var unlocked = "Delivery is free on this order until 14 November.";
   var shortfall = "Add {amount} AED more and delivery is free until 14 November.";
 
@@ -30,16 +30,20 @@ window.GhafricOffer = (function () {
     return fill(shortfall, { amount: spend - products });
   }
 
+  function over() {
+    var day = today();
+    return !!day && day > end;
+  }
+
   function paint(tr) {
-    var active = on();
+    var closed = over();
     document.querySelectorAll("[data-offer-slot]").forEach(function (slot) {
-      slot.hidden = !active;
-      slot.textContent = active ? tr(line) : "";
+      slot.hidden = closed;
+      slot.textContent = closed ? "" : tr(line);
     });
     var feature = document.getElementById("delivery-feature");
     if (feature) {
-      if (!feature.dataset.offerBase) feature.dataset.offerBase = (feature.dataset.en || feature.textContent).replace(/\s+/g, " ").trim();
-      feature.textContent = tr(active ? "150 AED, delivery free" : feature.dataset.offerBase);
+      feature.textContent = tr(closed ? "Delivery 25 AED" : "150 AED, delivery free");
     }
   }
 
