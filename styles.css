@@ -1421,6 +1421,20 @@ html.js .cat-group:not(.is-on) {
   display: block;
 }
 
+.piece-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.piece-nav a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .lang {
   display: inline-flex;
   align-items: center;
