@@ -209,9 +209,12 @@
   var maxQty = 60;
   var qty = 2;
 
+  var deliveryLabel = document.getElementById("estimator-delivery");
+
   function render() {
     var products = qty * piecePrice;
-    var grand = products + deliveryFee;
+    var fee = qty >= 2 ? 0 : deliveryFee;
+    var grand = products + fee;
     var door = grand + codFee;
     var wordEn = qty === 1 ? "piece" : "pieces";
     var word = tr(wordEn);
@@ -220,6 +223,7 @@
     if (qtyCopy) qtyCopy.textContent = String(qty);
     if (wordEl) wordEl.textContent = word;
     productEl.textContent = products + " AED";
+    if (deliveryLabel) deliveryLabel.textContent = fee ? fee + " AED" : tr("Free");
     grandEl.textContent = grand + " AED";
     if (doorEl) doorEl.textContent = door + " AED";
     dec.disabled = qty <= minQty;
@@ -373,10 +377,16 @@
     return null;
   }
 
+  function chargeFor(count) {
+    if (!count || count >= 2) return 0;
+    return deliveryFee;
+  }
+
   function render() {
     var count = pieces();
     var products = count * piecePrice;
-    var total = count ? products + deliveryFee : 0;
+    var fee = chargeFor(count);
+    var total = count ? products + fee : 0;
     var door = count ? total + codFee : 0;
 
     if (linesEl) linesEl.innerHTML = "";
@@ -454,7 +464,14 @@
     if (linesEl) linesEl.hidden = count === 0;
     if (clearBtn) clearBtn.hidden = count === 0;
     if (productsEl) productsEl.textContent = products + " AED";
-    if (deliveryEl) deliveryEl.textContent = count ? deliveryFee + " AED" : "—";
+    if (deliveryEl) deliveryEl.textContent = count ? (fee ? fee + " AED" : tr("Free")) : "—";
+    var offerEl = document.getElementById("cart-offer");
+    if (offerEl) {
+      offerEl.hidden = count === 0;
+      offerEl.textContent = count === 1
+        ? tr("Add one more piece and delivery is free.")
+        : (count ? tr("Delivery is free on this order.") : "");
+    }
     if (totalEl) totalEl.textContent = total + " AED";
     if (doorTotalEl) doorTotalEl.textContent = count ? door + " AED" : "—";
     if (countEl) countEl.textContent = String(count);
@@ -530,7 +547,9 @@
       if (live && added) {
         var totalPieces = pieces();
         var pieceWord = tr(totalPieces === 1 ? "piece" : "pieces");
-        live.textContent = fill("{name} added. {count} {word} in checkout.", { name: tr(name), count: totalPieces, word: pieceWord });
+        var addedLine = fill("{name} added. {count} {word} in checkout.", { name: tr(name), count: totalPieces, word: pieceWord });
+        if (totalPieces === 1) addedLine += " " + tr("Add one more piece and delivery is free.");
+        live.textContent = addedLine;
       }
     });
   });
@@ -580,7 +599,8 @@
     if (phoneInput) phoneInput.setCustomValidity("");
 
     var products = count * piecePrice;
-    var total = products + deliveryFee;
+    var fee = chargeFor(count);
+    var total = products + fee;
     var door = total + codFee;
     var itemLines = cart.map(function (item) {
       return "- " + orderName(item.name) + " x " + item.qty + " = " + moneyText(item.qty * piecePrice);
@@ -593,7 +613,7 @@
       tr("Items:") + "\n" +
       itemLines +
       "\n\n" + tr("Products:") + " " + moneyText(products) + "\n" +
-      tr("Delivery:") + " " + moneyText(deliveryFee) + "\n" +
+      tr("Delivery:") + " " + (fee ? moneyText(fee) : tr("Free")) + "\n" +
       tr("Pay on Ziina:") + " " + moneyText(total) + "\n" +
       "https://pay.ziina.com/TheGhanaShop?source=app&amount=" + total + "\n" +
       tr("Pay at the door:") + " " + moneyText(door) + "\n" +

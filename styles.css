@@ -1192,6 +1192,24 @@ html.js .cat-group:not(.is-on) {
   font-weight: 700;
 }
 
+.offer-band {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  background: var(--ink);
+  color: var(--gold);
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.offer-line,
+.cart-offer {
+  margin: 0.45rem 0 0;
+  color: var(--blue-ink);
+  font-weight: 700;
+}
+
 .footer__base {
   margin-top: 1.8rem;
   padding-top: 1rem;
