@@ -1,3 +1,51 @@
+window.GhafricOffer = (function () {
+  var start = "2026-11-07";
+  var end = "2026-11-14";
+  var spend = 150;
+  var line = "Spend 150 AED and delivery is free. Ends 14 November.";
+  var unlocked = "Delivery is free on this order until 14 November.";
+  var shortfall = "Add {amount} AED more and delivery is free until 14 November.";
+
+  function today() {
+    try {
+      return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dubai" });
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function on() {
+    var day = today();
+    return day >= start && day <= end;
+  }
+
+  function fee(products) {
+    if (on() && products >= spend) return 0;
+    return 25;
+  }
+
+  function note(products, tr, fill) {
+    if (!on() || !products) return "";
+    if (products >= spend) return tr(unlocked);
+    return fill(shortfall, { amount: spend - products });
+  }
+
+  function paint(tr) {
+    var active = on();
+    document.querySelectorAll("[data-offer-slot]").forEach(function (slot) {
+      slot.hidden = !active;
+      slot.textContent = active ? tr(line) : "";
+    });
+    var feature = document.getElementById("delivery-feature");
+    if (feature) {
+      if (!feature.dataset.offerBase) feature.dataset.offerBase = (feature.dataset.en || feature.textContent).replace(/\s+/g, " ").trim();
+      feature.textContent = tr(active ? "150 AED, delivery free" : feature.dataset.offerBase);
+    }
+  }
+
+  return { on: on, fee: fee, spend: spend, note: note, paint: paint };
+})();
+
 (function () {
   var links = document.querySelectorAll(".categories a");
   var groups = document.querySelectorAll(".cat-group");
@@ -202,7 +250,6 @@
   if (!dec || !inc || !qtyEl || !productEl || !grandEl || !orderLink) return;
 
   var piecePrice = 30;
-  var deliveryFee = 25;
   var codFee = 10;
   var doorEl = document.getElementById("door-total");
   var minQty = 1;
@@ -213,7 +260,16 @@
 
   function render() {
     var products = qty * piecePrice;
-    var fee = qty >= 2 ? 0 : deliveryFee;
+    var fee = window.GhafricOffer.fee(products);
+    window.GhafricOffer.paint(tr);
+    var estimateOffer = document.getElementById("estimator-offer");
+    if (estimateOffer) {
+      var estimateNote = window.GhafricOffer.note(products, tr, function (en, vars) {
+        return window.GhafricI18n ? window.GhafricI18n.fill(en, vars) : en;
+      });
+      estimateOffer.hidden = !estimateNote;
+      estimateOffer.textContent = estimateNote;
+    }
     var grand = products + fee;
     var door = grand + codFee;
     var wordEn = qty === 1 ? "piece" : "pieces";
@@ -289,7 +345,6 @@
   }
 
   var piecePrice = 30;
-  var deliveryFee = 25;
   var codFee = 10;
   var maxQty = 20;
   var cartKey = "ghafric-bazaar-cart";
@@ -378,8 +433,8 @@
   }
 
   function chargeFor(count) {
-    if (!count || count >= 2) return 0;
-    return deliveryFee;
+    if (!count) return 0;
+    return window.GhafricOffer.fee(count * piecePrice);
   }
 
   function render() {
@@ -465,12 +520,12 @@
     if (clearBtn) clearBtn.hidden = count === 0;
     if (productsEl) productsEl.textContent = products + " AED";
     if (deliveryEl) deliveryEl.textContent = count ? (fee ? fee + " AED" : tr("Free")) : "—";
+    window.GhafricOffer.paint(tr);
     var offerEl = document.getElementById("cart-offer");
     if (offerEl) {
-      offerEl.hidden = count === 0;
-      offerEl.textContent = count === 1
-        ? tr("Add one more piece and delivery is free.")
-        : (count ? tr("Delivery is free on this order.") : "");
+      var offerNote = window.GhafricOffer.note(products, tr, fill);
+      offerEl.hidden = !offerNote;
+      offerEl.textContent = offerNote;
     }
     if (totalEl) totalEl.textContent = total + " AED";
     if (doorTotalEl) doorTotalEl.textContent = count ? door + " AED" : "—";
@@ -548,7 +603,8 @@
         var totalPieces = pieces();
         var pieceWord = tr(totalPieces === 1 ? "piece" : "pieces");
         var addedLine = fill("{name} added. {count} {word} in checkout.", { name: tr(name), count: totalPieces, word: pieceWord });
-        if (totalPieces === 1) addedLine += " " + tr("Add one more piece and delivery is free.");
+        var addedOffer = window.GhafricOffer.note(totalPieces * piecePrice, tr, fill);
+        if (addedOffer) addedLine += " " + addedOffer;
         live.textContent = addedLine;
       }
     });
